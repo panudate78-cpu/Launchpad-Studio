@@ -60,7 +60,7 @@ npm run build:check  # typecheck + build
 
 ### Vercel
 
-Configuration is in `vercel.json`. No dashboard changes needed.
+The static site configuration is in `vercel.json`. The enquiry form is handled by the Vercel Serverless Function in `api/contact.ts` and needs the environment variables below before it can send enquiries.
 
 | Setting | Value |
 | --- | --- |
@@ -70,9 +70,27 @@ Configuration is in `vercel.json`. No dashboard changes needed.
 | Install Command | `npm install` |
 | Node.js Version | 20.x (from `.nvmrc`) |
 
+#### Contact form setup (one time)
+
+The form posts to `/api/contact`. The function validates the submission, saves it to a Neon PostgreSQL database, and sends an email notification to `hello@launchpadstudio.uk` using Resend. Database and email credentials are used only on the server; do not prefix them with `VITE_` or expose them in frontend code.
+
+1. Create a Neon database (or provision Neon through the Vercel Marketplace) and copy its PostgreSQL connection string.
+2. Verify a sender domain in Resend and create an API key. `RESEND_FROM_EMAIL` must use an address on that verified domain, for example `Launchpad Studio <enquiries@launchpadstudio.uk>`.
+3. Add these variables in **Vercel → Project → Settings → Environment Variables** for Production and Preview, then redeploy:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Neon PostgreSQL connection string |
+   | `RESEND_API_KEY` | Resend API key |
+   | `RESEND_FROM_EMAIL` | Verified sender, e.g. `Launchpad Studio <enquiries@launchpadstudio.uk>` |
+
+The function creates the `contact_enquiries` table on its first valid submission. Each enquiry is stored with its delivery status and timestamp; notification emails include the customer's name, business, reply-to email, phone, selected website type and message. The visitor sees success only after the notification is accepted by Resend. If delivery fails after storage, the form reports that the enquiry was saved and asks the visitor to retry. Enquiry data is personal information, so restrict access to the Neon and Resend accounts and remove records when they are no longer needed under your privacy/retention policy.
+
+For local end-to-end testing, copy `.env.example` to `.env.local`, add real test credentials, then run `npx vercel dev` (after linking the project with the Vercel CLI). `npm run dev` starts Vite only and does not run Vercel API functions.
+
 ### Netlify
 
-Configuration is in `netlify.toml`. No dashboard changes needed.
+The static site can still be built with `netlify.toml`, but `api/contact.ts` is a Vercel Serverless Function. A Netlify deployment needs an equivalent Netlify Function or a hosted form provider for the enquiry form; use Vercel if you want the included serverless form endpoint.
 
 | Setting | Value |
 | --- | --- |
@@ -111,10 +129,13 @@ src/
   utils/
     liveScreenshot.ts      Live client-site screenshot URLs + fallback
   assets/admin/            Optional real admin screenshots (auto-detected by filename)
+api/
+  contact.ts               Vercel enquiry endpoint (Neon storage + Resend email)
 scripts/
   fix-perms.mjs            postinstall permission repair
 vercel.json                Vercel build config
-netlify.toml               Netlify build config
+netlify.toml               Netlify static-site config
+.env.example               Server-side contact form variables
 .nvmrc                     Pinned Node version
 ```
 
