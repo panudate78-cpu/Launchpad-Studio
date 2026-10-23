@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight, ArrowUpRight, BadgeCheck, Building2, CalendarCheck, Check, ChevronDown,
   Clock, Coffee, Globe, HandHeart, LayoutDashboard, Mail, MapPin, Menu, MonitorSmartphone,
   RefreshCw, Rocket, Scissors, Search, Server, ShieldCheck, ShoppingBag,
   Star, Store, UtensilsCrossed, Wrench, X, Zap, MessageSquare, FileText, MousePointerClick,
-  HeartHandshake, PoundSterling, Timer, Eye, Lock, Camera
+  HeartHandshake, PoundSterling, Timer, Lock, Camera
 } from "lucide-react";
 import AdminShowcase from "./components/AdminShowcase";
+import PricingGuide from "./components/PricingGuide";
 import { liveScreenshot, SCREENSHOT_FALLBACK } from "./utils/liveScreenshot";
 
 // Real, live screenshots of the actual client websites (rendered on demand by URL —
@@ -25,6 +26,7 @@ const NAV = [
   { label: "Services", href: "#services" },
   { label: "Our Work", href: "#work" },
   { label: "Admin System", href: "#admin" },
+  { label: "Pricing", href: "#pricing" },
   { label: "Process", href: "#process" },
   { label: "About", href: "#about" },
   { label: "FAQs", href: "#faq" },
@@ -130,20 +132,20 @@ const PROJECTS = [
   {
     id: "little-moonbeam",
     category: "Retail",
-    name: "Little Moonbeam",
-    type: "Online Boutique Website",
-    location: "Online Boutique",
+    name: "Little Moonbeam's Creations",
+    type: "Handmade Jewellery & Gemstone Website",
+    location: "Independent jewellery maker",
     url: "",
     urlLabel: "Link available on request",
-    img: "https://images.pexels.com/photos/9594684/pexels-photo-9594684.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+    img: "https://images.pexels.com/photos/10429340/pexels-photo-10429340.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
     img2: "",
     mobile: "",
     real: false,
-    alt: "Minimal boutique clothing rail representing Little Moonbeam online boutique",
-    overview: "A soft, product-led boutique website designed to present collections beautifully, make browsing effortless on phones, and give the business a storefront that is always open.",
-    services: ["E-commerce Website", "Product Presentation", "Mobile Shopping Experience", "Brand-Led Design"],
-    features: ["Product-focused layout", "Mobile-first shopping", "Clean, boutique feel", "Simple enquiry & contact"],
-    outcome: "An online storefront that reflects the care behind the products — making the boutique look established, trustworthy and easy to buy from.",
+    alt: "Handmade gemstone bead bracelet representing the Little Moonbeam's Creations jewellery website",
+    overview: "A bespoke e-commerce website created for a jewellery designer specialising in handmade pieces crafted with semi-precious gemstones. Each collection is presented to show the stones and the artisan detail up close — with clear, easy browsing on a phone — giving an independent maker a professional home online to grow the brand from.",
+    services: ["Bespoke E-commerce Website", "Collection & Product Pages", "Mobile-First Shopping", "Artisan Brand Design"],
+    features: ["Handmade collections showcased", "Semi-precious gemstones in detail", "Easy browsing on mobile", "Clear pricing & secure enquiry", "Simple to update with new pieces"],
+    outcome: "A site that reflects the craftsmanship behind every handmade piece — helping a small independent jewellery business look established, reach customers beyond the local market, and grow on its own terms.",
     accent: "bg-amber-700",
     featured: false,
   },
@@ -211,7 +213,14 @@ function BrowserMock({ img, alt, urlLabel, name, type, badge }: { img: string; a
         {badge && <span className="hidden sm:inline-flex shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">{badge}</span>}
       </div>
       <div className="relative">
-        <img src={img} alt={alt} className="aspect-[16/10] w-full object-cover" loading="lazy" />
+        <img
+          src={img}
+          alt={alt}
+          className="aspect-[16/10] w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#071426]/75 via-[#071426]/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
           <p className="font-[Fraunces,Georgia,serif] text-2xl font-semibold text-white sm:text-3xl">{name}</p>
@@ -242,23 +251,19 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [filter, setFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [pages, setPages] = useState(5);
-  const [extras, setExtras] = useState<string[]>(["seo"]);
-  const [form, setForm] = useState({ name: "", business: "", email: "", phone: "", type: "New Business Website", message: "" });
+  const [quoteContext, setQuoteContext] = useState("");
+  const [form, setForm] = useState({ name: "", business: "", email: "", phone: "", type: "Business Website", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState("");
 
   const filtered = filter === "All" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
 
-  const estimate = useMemo(() => {
-    let low = 495, high = 795;
-    if (pages > 5) { low += (pages - 5) * 60; high += (pages - 5) * 95; }
-    const costs: Record<string, [number, number]> = { cms: [250, 450], shop: [600, 1200], booking: [150, 350], seo: [0, 0], copy: [150, 300] };
-    extras.forEach(e => { low += costs[e][0]; high += costs[e][1]; });
-    return { low, high };
-  }, [pages, extras]);
-
-  const toggleExtra = (id: string) => setExtras(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  // Selecting a package in the pricing guide pre-fills the quote form below.
+  const handleGuideQuote = (packageName: string) => {
+    setQuoteContext(packageName);
+    setForm(f => ({ ...f, type: packageName }));
+    setSubmitted(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,7 +296,7 @@ export default function App() {
             </span>
           </a>
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
-            {NAV.map(n => <a key={n.href} href={n.href} className="rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#0B1E3B]">{n.label}</a>)}
+            {NAV.map(n => <a key={n.href} href={n.href} className="rounded-lg px-2.5 py-2 text-[13.5px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#0B1E3B] xl:px-3.5 xl:text-sm">{n.label}</a>)}
           </nav>
           <div className="flex items-center gap-2">
             <a href="#quote" className="hidden items-center gap-2 rounded-full bg-[#0B1E3B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#122A52] sm:inline-flex">Get a Free Quote <ArrowRight className="h-4 w-4" /></a>
@@ -444,7 +449,7 @@ export default function App() {
                       ) : (
                         <>
                           <BrowserMock img={p.img} alt={p.alt} urlLabel={p.urlLabel} name={p.name} type={p.type} badge="Placeholder — replace" />
-                          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Placeholder image — swap in a real screenshot of the Little Moonbeam site when it's ready to share publicly.</p>
+                          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Placeholder image — swap in a real screenshot of the Little Moonbeam's Creations site when it's ready to share publicly.</p>
                         </>
                       )}
                     </div>
@@ -523,55 +528,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* --------------------------- GUIDE ESTIMATOR --------------------------- */}
-        <section className="bg-white py-20 lg:py-24" aria-labelledby="guide-heading">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid gap-10 lg:grid-cols-12">
-              <div className="lg:col-span-5">
-                <SectionHeading align="left" eyebrow="Honest Pricing Guide" title="Get a rough idea of cost — before you even talk to us" copy="No hidden pricing games. Use this guide to get a ballpark, then get a fixed written quote for your exact needs. Final price is confirmed in writing before work starts." />
-                <div className="mt-6 space-y-3 text-sm leading-relaxed text-slate-600">
-                  <p className="flex gap-2"><PoundSterling className="mt-0.5 h-4 w-4 shrink-0 text-[#E85A28]" /><span><strong className="text-[#0B1E3B]">You own everything.</strong> Your domain, website and content are yours — never held hostage.</span></p>
-                  <p className="flex gap-2"><Eye className="mt-0.5 h-4 w-4 shrink-0 text-[#E85A28]" /><span><strong className="text-[#0B1E3B]">No obligation.</strong> The guide and the quote are free. Take your time deciding.</span></p>
-                  <p className="flex gap-2"><HeartHandshake className="mt-0.5 h-4 w-4 shrink-0 text-[#E85A28]" /><span><strong className="text-[#0B1E3B]">No large agency pricing.</strong> You work directly with the person building your site.</span></p>
-                </div>
-              </div>
-              <div className="lg:col-span-7">
-                <div className="rounded-3xl border border-slate-200 bg-[#F8FAFC] p-6 sm:p-8">
-                  <div className="flex items-center justify-between gap-4">
-                    <label htmlFor="pages" className="text-sm font-bold text-[#0B1E3B]">How many pages do you need?</label>
-                    <span className="rounded-full bg-[#0B1E3B] px-3 py-1 text-sm font-bold text-white">{pages} pages</span>
-                  </div>
-                  <input id="pages" type="range" min={1} max={15} value={pages} onChange={e => setPages(Number(e.target.value))} className="mt-3 w-full accent-[#FF6B35]" aria-describedby="pages-help" />
-                  <p id="pages-help" className="text-xs text-slate-500">E.g. Home, About, Services, Gallery, Contact = 5 pages. Menus and product pages may count differently — we'll advise.</p>
-
-                  <p className="mt-6 text-sm font-bold text-[#0B1E3B]">Anything extra?</p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {[
-                      { id: "cms", label: "Admin area / update menus & content myself" },
-                      { id: "shop", label: "Online shop (sell products)" },
-                      { id: "booking", label: "Booking / enquiry system" },
-                      { id: "copy", label: "Help writing my website text" },
-                      { id: "seo", label: "SEO & Google setup (included as standard)" },
-                    ].map(o => (
-                      <button key={o.id} onClick={() => toggleExtra(o.id)} aria-pressed={extras.includes(o.id)} className={`flex items-start gap-2.5 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${extras.includes(o.id) ? "bg-[#0B1E3B] text-white shadow" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-[#0B1E3B]"}`}>
-                        <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${extras.includes(o.id) ? "bg-[#FF6B35]" : "bg-slate-100 ring-1 ring-slate-300"}`}>{extras.includes(o.id) && <Check className="h-3.5 w-3.5 text-white" />}</span>{o.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl bg-white p-5 ring-1 ring-slate-200 sm:flex-row sm:items-center">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Guide estimate</p>
-                      <p className="mt-1 text-3xl font-extrabold tracking-tight text-[#0B1E3B]">£{estimate.low.toLocaleString()} – £{estimate.high.toLocaleString()}</p>
-                      <p className="mt-1 text-xs text-slate-500">Guide only — not a quote. Hosting &amp; maintenance discussed separately, in plain English.</p>
-                    </div>
-                    <a href="#quote" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white hover:bg-[#E85A28]">Get my exact quote <ArrowRight className="h-4 w-4" /></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* --------------------------- PRICING GUIDE --------------------------- */}
+        <PricingGuide onRequestQuote={handleGuideQuote} />
 
         {/* ------------------------------- ABOUT ------------------------------- */}
         <section id="about" className="scroll-mt-24 border-y border-slate-200 bg-[#F8FAFC] py-20 lg:py-24">
@@ -697,10 +655,15 @@ export default function App() {
                       <fieldset className="mt-6">
                         <legend className="text-sm font-bold text-[#0B1E3B]">Website Required *</legend>
                         <div className="mt-2.5 flex flex-wrap gap-2">
-                          {["New Business Website", "Restaurant Website", "E-commerce Website", "Website Refresh", "Maintenance / Hosting", "Not Sure Yet"].map(t => (
+                          {["Starter Website", "Business Website", "E-commerce Website", "Website Refresh", "Maintenance / Hosting", "Not Sure Yet"].map(t => (
                             <button key={t} type="button" onClick={() => setForm({ ...form, type: t })} aria-pressed={form.type === t} className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${form.type === t ? "bg-[#0B1E3B] text-white shadow" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>{t}</button>
                           ))}
                         </div>
+                        {quoteContext && (
+                          <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-[#FFF3EC] px-3 py-2 text-[12px] font-medium text-[#C7511F] ring-1 ring-[#FFD9C7]">
+                            <Check className="h-3.5 w-3.5 shrink-0" /> Pre-filled from your pricing guide choice: {quoteContext}
+                          </p>
+                        )}
                       </fieldset>
 
                       <div className="mt-6 grid gap-4 sm:grid-cols-2">
