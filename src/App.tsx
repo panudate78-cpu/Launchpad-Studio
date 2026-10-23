@@ -132,20 +132,20 @@ const PROJECTS = [
   {
     id: "little-moonbeam",
     category: "Retail",
-    name: "Little Moonbeam",
-    type: "Online Boutique Website",
-    location: "Online Boutique",
+    name: "Little Moonbeam's Creations",
+    type: "Handmade Jewellery & Gemstone Website",
+    location: "Independent jewellery maker",
     url: "",
     urlLabel: "Link available on request",
-    img: "https://images.pexels.com/photos/9594684/pexels-photo-9594684.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
+    img: "https://images.pexels.com/photos/10429340/pexels-photo-10429340.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=627&w=1200",
     img2: "",
     mobile: "",
     real: false,
-    alt: "Minimal boutique clothing rail representing Little Moonbeam online boutique",
-    overview: "A soft, product-led boutique website designed to present collections beautifully, make browsing effortless on phones, and give the business a storefront that is always open.",
-    services: ["E-commerce Website", "Product Presentation", "Mobile Shopping Experience", "Brand-Led Design"],
-    features: ["Product-focused layout", "Mobile-first shopping", "Clean, boutique feel", "Simple enquiry & contact"],
-    outcome: "An online storefront that reflects the care behind the products — making the boutique look established, trustworthy and easy to buy from.",
+    alt: "Handmade gemstone bead bracelet representing the Little Moonbeam's Creations jewellery website",
+    overview: "A bespoke e-commerce website created for a jewellery designer specialising in handmade pieces crafted with semi-precious gemstones. Each collection is presented to show the stones and the artisan detail up close — with clear, easy browsing on a phone — giving an independent maker a professional home online to grow the brand from.",
+    services: ["Bespoke E-commerce Website", "Collection & Product Pages", "Mobile-First Shopping", "Artisan Brand Design"],
+    features: ["Handmade collections showcased", "Semi-precious gemstones in detail", "Easy browsing on mobile", "Clear pricing & secure enquiry", "Simple to update with new pieces"],
+    outcome: "A site that reflects the craftsmanship behind every handmade piece — helping a small independent jewellery business look established, reach customers beyond the local market, and grow on its own terms.",
     accent: "bg-amber-700",
     featured: false,
   },
@@ -213,7 +213,14 @@ function BrowserMock({ img, alt, urlLabel, name, type, badge }: { img: string; a
         {badge && <span className="hidden sm:inline-flex shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">{badge}</span>}
       </div>
       <div className="relative">
-        <img src={img} alt={alt} className="aspect-[16/10] w-full object-cover" loading="lazy" />
+        <img
+          src={img}
+          alt={alt}
+          className="aspect-[16/10] w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#071426]/75 via-[#071426]/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
           <p className="font-[Fraunces,Georgia,serif] text-2xl font-semibold text-white sm:text-3xl">{name}</p>
@@ -442,7 +449,7 @@ export default function App() {
                       ) : (
                         <>
                           <BrowserMock img={p.img} alt={p.alt} urlLabel={p.urlLabel} name={p.name} type={p.type} badge="Placeholder — replace" />
-                          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Placeholder image — swap in a real screenshot of the Little Moonbeam site when it's ready to share publicly.</p>
+                          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Placeholder image — swap in a real screenshot of the Little Moonbeam's Creations site when it's ready to share publicly.</p>
                         </>
                       )}
                     </div>
