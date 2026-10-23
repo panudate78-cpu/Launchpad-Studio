@@ -164,27 +164,21 @@ const FAQS = [
 
 /* --------------------------------- helpers --------------------------------- */
 
-function RealFrame({ img, alt, urlLabel, href, eager }: { img: string; alt: string; urlLabel: string; href?: string; eager?: boolean }) {
-  const inner = (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_-20px_rgba(11,30,59,0.3)]">
-      <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-        <span className="flex gap-1.5" aria-hidden="true"><i className="block h-2.5 w-2.5 rounded-full bg-[#FF5F57]" /><i className="block h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" /><i className="block h-2.5 w-2.5 rounded-full bg-[#28C840]" /></span>
-        <span className="ml-2 flex flex-1 items-center gap-1.5 truncate rounded-md bg-white px-3 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"><Lock className="h-3 w-3 shrink-0 text-emerald-600" />{urlLabel}</span>
-        <span className="hidden shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:inline-flex"><Camera className="h-3 w-3" />Live site</span>
-      </div>
-      <img
-        src={img}
-        alt={alt}
-        width={1200}
-        height={750}
-        className="block aspect-[16/10] w-full object-cover object-top"
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
-      />
-    </div>
+function RealFrame({ img, alt, href, eager }: { img: string; alt: string; href?: string; eager?: boolean }) {
+  const image = (
+    <img
+      src={img}
+      alt={alt}
+      width={1200}
+      height={750}
+      className="block aspect-[16/10] w-full rounded-2xl border border-slate-200 object-cover object-top shadow-[0_20px_60px_-20px_rgba(11,30,59,0.3)]"
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
+    />
   );
-  return href ? <a href={href} target="_blank" rel="noopener noreferrer" className="group block transition hover:-translate-y-0.5" aria-label={`Visit ${urlLabel} (opens in new tab)`}>{inner}</a> : inner;
+
+  return href ? <a href={href} target="_blank" rel="noopener noreferrer" className="block transition hover:-translate-y-0.5">{image}</a> : image;
 }
 
 function PhoneFrame({ img, alt, className = "" }: { img: string; alt: string; className?: string }) {
@@ -204,31 +198,25 @@ function PhoneFrame({ img, alt, className = "" }: { img: string; alt: string; cl
   );
 }
 
-function BrowserMock({ img, alt, urlLabel, name, type, badge }: { img: string; alt: string; urlLabel: string; name: string; type: string; badge?: string }) {
+function ProjectPlaceholder({ img, alt, name, type, badge }: { img: string; alt: string; name: string; type: string; badge?: string }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_-20px_rgba(11,30,59,0.25)]">
-      <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-        <span className="flex gap-1.5" aria-hidden="true"><i className="h-2.5 w-2.5 rounded-full bg-[#FF5F57] block" /><i className="h-2.5 w-2.5 rounded-full bg-[#FEBC2E] block" /><i className="h-2.5 w-2.5 rounded-full bg-[#28C840] block" /></span>
-        <span className="ml-2 flex flex-1 items-center gap-1.5 truncate rounded-md bg-white px-3 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"><Lock className="h-3 w-3 text-emerald-600 shrink-0" />{urlLabel}</span>
-        {badge && <span className="hidden sm:inline-flex shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">{badge}</span>}
-      </div>
-      <div className="relative">
-        <img
-          src={img}
-          alt={alt}
-          className="aspect-[16/10] w-full object-cover"
-          loading="lazy"
-          decoding="async"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#071426]/75 via-[#071426]/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-          <p className="font-[Fraunces,Georgia,serif] text-2xl font-semibold text-white sm:text-3xl">{name}</p>
-          <p className="mt-1 text-sm text-white/85">{type}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-900">View Menu / Services</span>
-            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/40 backdrop-blur">Call to Book</span>
-          </div>
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_-20px_rgba(11,30,59,0.25)]">
+      <img
+        src={img}
+        alt={alt}
+        className="aspect-[16/10] w-full object-cover"
+        loading="lazy"
+        decoding="async"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = SCREENSHOT_FALLBACK; }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#071426]/75 via-[#071426]/10 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+        {badge && <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">{badge}</span>}
+        <p className="mt-2 font-[Fraunces,Georgia,serif] text-2xl font-semibold text-white sm:text-3xl">{name}</p>
+        <p className="mt-1 text-sm text-white/85">{type}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-900">View Menu / Services</span>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/40 backdrop-blur">Call to Book</span>
         </div>
       </div>
     </div>
@@ -380,7 +368,7 @@ export default function App() {
 
               <div className="relative lg:col-span-6">
                 <div className="dot-grid absolute -right-6 -top-6 h-40 w-40 opacity-60" aria-hidden="true" />
-                <RealFrame img={tcDesktop} alt="Thai Courtyard East Molesey restaurant website homepage, built by Launchpad Studio" urlLabel="thaicourtyardmolesey.co.uk" href="https://www.thaicourtyardmolesey.co.uk" eager />
+                <RealFrame img={tcDesktop} alt="Thai Courtyard East Molesey restaurant website homepage, built by Launchpad Studio" href="https://www.thaicourtyardmolesey.co.uk" eager />
                 {/* real mobile screenshot */}
                 <div className="animate-floaty absolute -bottom-10 -left-2 hidden w-[132px] sm:block lg:-left-10">
                   <PhoneFrame img={chMobile} alt="Chantara Thai Massage website on a mobile phone" />
@@ -471,12 +459,12 @@ export default function App() {
                       {p.real ? (
                         <>
                           <div className="relative pb-6 pr-10 sm:pr-16">
-                            <RealFrame img={p.img} alt={p.alt} urlLabel={p.urlLabel} href={p.url} />
+                            <RealFrame img={p.img} alt={p.alt} href={p.url} />
                             {p.mobile && <PhoneFrame img={p.mobile} alt={`${p.name} website on a mobile phone`} className="absolute bottom-0 right-0 w-[92px] sm:w-[120px]" />}
                           </div>
                           {p.img2 && (
                             <figure className="mt-4">
-                              <RealFrame img={p.img2} alt={`${p.name} online menu page`} urlLabel={`${p.urlLabel}/menu`} href={`${p.url}/menu`} />
+                              <RealFrame img={p.img2} alt={`${p.name} online menu page`} href={`${p.url}/menu`} />
                               <figcaption className="mt-2 text-xs text-slate-500">Menu page — prices and dishes are managed by the owner from the admin dashboard.</figcaption>
                             </figure>
                           )}
@@ -484,7 +472,7 @@ export default function App() {
                         </>
                       ) : (
                         <>
-                          <BrowserMock img={p.img} alt={p.alt} urlLabel={p.urlLabel} name={p.name} type={p.type} badge="Placeholder — replace" />
+                          <ProjectPlaceholder img={p.img} alt={p.alt} name={p.name} type={p.type} badge="Placeholder — replace" />
                           <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Placeholder image — swap in a real screenshot of the Little Moonbeam's Creations site when it's ready to share publicly.</p>
                         </>
                       )}

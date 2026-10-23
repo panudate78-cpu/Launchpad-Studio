@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Check, LayoutDashboard, Lock, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { ADMIN_SCREENS, AdminScreenView, type AdminScreen } from "./AdminScreens";
 
 export default function AdminShowcase() {
@@ -55,12 +55,7 @@ export default function AdminShowcase() {
           </div>
 
           <div className="lg:col-span-8">
-            <div id="admin-panel" role="tabpanel" aria-label={active.label} className="overflow-hidden rounded-2xl border border-slate-200 shadow-[0_30px_70px_-30px_rgba(11,30,59,0.45)]">
-              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-                <span className="flex gap-1.5" aria-hidden="true"><i className="block h-2.5 w-2.5 rounded-full bg-[#FF5F57]" /><i className="block h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" /><i className="block h-2.5 w-2.5 rounded-full bg-[#28C840]" /></span>
-                <span className="ml-2 flex flex-1 items-center gap-1.5 truncate rounded-md bg-white px-3 py-1 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200"><Lock className="h-3 w-3 shrink-0 text-emerald-600" />thaicourtyardmolesey.co.uk/admin{active.id === "sign-in" ? "/login" : `/${active.id}`}</span>
-                <span className="hidden shrink-0 items-center gap-1 rounded-full bg-[#0B1E3B] px-2 py-0.5 text-[10px] font-semibold text-white sm:inline-flex"><LayoutDashboard className="h-3 w-3" />Admin</span>
-              </div>
+            <div id="admin-panel" role="tabpanel" aria-label={active.label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_30px_70px_-30px_rgba(11,30,59,0.45)]">
               <div className="max-h-[620px] overflow-y-auto">
                 <AdminScreenView key={active.id} screen={active} />
               </div>
