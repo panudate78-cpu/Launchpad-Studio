@@ -180,11 +180,19 @@ export default async function contact(request: FunctionRequest, response: Functi
     return jsonError(response, 400, "Please check your name, email address and project details.");
   }
 
-  const databaseUrl = process.env.DATABASE_URL;
+  // Neon integrations on Vercel may expose either DATABASE_URL or POSTGRES_URL.
+  const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
   const resendApiKey = process.env.RESEND_API_KEY;
-  const senderEmail = process.env.RESEND_FROM_EMAIL;
+  const senderEmail =
+    process.env.RESEND_FROM_EMAIL?.trim() || "Launchpad Studio <hello@launchpadstudio.uk>";
 
-  if (!databaseUrl || !resendApiKey || !senderEmail) {
+  if (!databaseUrl || !resendApiKey) {
+    const missingSettings = [
+      ...(!databaseUrl ? ["DATABASE_URL or POSTGRES_URL"] : []),
+      ...(!resendApiKey ? ["RESEND_API_KEY"] : []),
+    ];
+    // Log variable names only; never log secret values or enquiry content.
+    console.error("[contact] Missing required environment variables", missingSettings);
     return jsonError(
       response,
       503,

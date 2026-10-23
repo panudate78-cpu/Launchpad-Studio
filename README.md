@@ -74,15 +74,15 @@ The static site configuration is in `vercel.json`. The enquiry form is handled b
 
 The form posts to `/api/contact`. The function validates the submission, saves it to a Neon PostgreSQL database, and sends an email notification to `hello@launchpadstudio.uk` using Resend. Database and email credentials are used only on the server; do not prefix them with `VITE_` or expose them in frontend code.
 
-1. Create a Neon database (or provision Neon through the Vercel Marketplace) and copy its PostgreSQL connection string.
-2. Verify a sender domain in Resend and create an API key. `RESEND_FROM_EMAIL` must use an address on that verified domain, for example `Launchpad Studio <enquiries@launchpadstudio.uk>`.
-3. Add these variables in **Vercel → Project → Settings → Environment Variables** for Production and Preview, then redeploy:
+1. Create a Neon database (or provision Neon through the Vercel Marketplace) and add its PostgreSQL connection string as `DATABASE_URL` (Neon integrations that expose `POSTGRES_URL` are supported too).
+2. Verify the `launchpadstudio.uk` sending domain in Resend and create an API key. Unless overridden, the sender is `Launchpad Studio <hello@launchpadstudio.uk>`; if you use a different verified sender, set `RESEND_FROM_EMAIL` to it.
+3. Add the environment variables in **Vercel → Project → Settings → Environment Variables** for the environment you are testing (Production, Preview, or Development), then redeploy:
 
    | Variable | Value |
    | --- | --- |
-   | `DATABASE_URL` | Neon PostgreSQL connection string |
+   | `DATABASE_URL` (or `POSTGRES_URL`) | Neon PostgreSQL connection string |
    | `RESEND_API_KEY` | Resend API key |
-   | `RESEND_FROM_EMAIL` | Verified sender, e.g. `Launchpad Studio <enquiries@launchpadstudio.uk>` |
+   | `RESEND_FROM_EMAIL` | Optional verified sender; defaults to `Launchpad Studio <hello@launchpadstudio.uk>` |
 
 The function creates the `contact_enquiries` table on its first valid submission. Each enquiry is stored with its delivery status and timestamp; notification emails include the customer's name, business, reply-to email, phone, selected website type and message. The visitor sees success only after the notification is accepted by Resend. If delivery fails after storage, the form reports that the enquiry was saved and asks the visitor to retry. Enquiry data is personal information, so restrict access to the Neon and Resend accounts and remove records when they are no longer needed under your privacy/retention policy.
 
