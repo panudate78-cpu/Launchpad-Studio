@@ -40,3 +40,14 @@ body { font-family: var(--font-sans); color: #0f172a; background: #fff; -webkit-
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
 @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
 .animate-marquee { animation: marquee 28s linear infinite; }
+
+@keyframes estimate-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-estimate-pop { animation: estimate-pop .35s cubic-bezier(.2,.8,.25,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-estimate-pop { animation: none; }
+  html { scroll-behavior: auto; }
+}
