@@ -252,8 +252,9 @@ export default function App() {
   const [filter, setFilter] = useState("All");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [quoteContext, setQuoteContext] = useState("");
-  const [form, setForm] = useState({ name: "", business: "", email: "", phone: "", type: "Business Website", message: "" });
+  const [form, setForm] = useState({ name: "", business: "", email: "", phone: "", type: "Business Website", message: "", website: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
   const filtered = filter === "All" ? PROJECTS : PROJECTS.filter(p => p.category === filter);
@@ -265,11 +266,46 @@ export default function App() {
     setSubmitted(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) { setFormError("Please add your name, email and a few details about your project."); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setFormError("That email address doesn't look quite right — please check it and try again."); return; }
-    setFormError(""); setSubmitted(true);
+    if (isSubmitting) return;
+
+    setFormError("");
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setFormError("Please add your name, email and a few details about your project.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setFormError("That email address doesn't look quite right — please check it and try again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        credentials: "omit",
+        body: JSON.stringify(form),
+      });
+      const result: unknown = await response.json().catch(() => null);
+      const responseOk =
+        typeof result === "object" && result !== null && "ok" in result && result.ok === true;
+      const errorMessage =
+        typeof result === "object" && result !== null && "error" in result && typeof result.error === "string"
+          ? result.error
+          : "We couldn't send your enquiry just now. Please try again in a moment.";
+
+      if (!response.ok || !responseOk) {
+        setFormError(errorMessage);
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setFormError("We couldn't connect to the enquiry service. Please try again in a moment.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -616,10 +652,10 @@ export default function App() {
                 <p className="mt-4 max-w-md text-[16px] leading-relaxed text-white/75">Tell us a little about your business and what you need. You'll get a personal reply with honest advice and a clear, fixed quote — free, and with no obligation.</p>
 
                 <div className="mt-8 space-y-4">
-                  <a href="mailto:hello@launchpadstudio.uk" className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/12 hover:bg-white/10">
+                  <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/12">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]"><Mail className="h-5 w-5 text-white" /></span>
-                    <span><span className="block text-xs uppercase tracking-wide text-white/50">Email us</span><span className="font-semibold">hello@launchpadstudio.uk</span></span>
-                  </a>
+                    <span><span className="block text-xs uppercase tracking-wide text-white/50">Enquiries sent to</span><span className="font-semibold">hello@launchpadstudio.uk</span></span>
+                  </div>
                   <div className="flex items-center gap-3 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/12">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10"><MapPin className="h-5 w-5 text-[#FF8A5C]" /></span>
                     <span><span className="block text-xs uppercase tracking-wide text-white/50">Based in</span><span className="font-semibold">New Malden — serving Surrey &amp; South West London</span></span>
@@ -640,15 +676,18 @@ export default function App() {
               <div className="lg:col-span-7">
                 <div className="rounded-[28px] bg-white p-6 shadow-2xl sm:p-8">
                   {submitted ? (
-                    <div className="py-10 text-center" role="status">
+                    <div className="py-10 text-center" role="status" aria-live="polite">
                       <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200"><Check className="h-8 w-8 text-emerald-600" /></span>
-                      <h3 className="mt-5 text-2xl font-bold text-[#0B1E3B]">Thank you, {form.name.split(" ")[0]} — request received.</h3>
-                      <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">Your quote request for a <strong>{form.type}</strong> is ready. To send it straight to our inbox, tap the button below — it will open your email app with everything filled in.</p>
-                      <a href={`mailto:hello@launchpadstudio.uk?subject=${encodeURIComponent(`Website quote request — ${form.business || form.name}`)}&body=${encodeURIComponent(`Name: ${form.name}\nBusiness: ${form.business}\nEmail: ${form.email}\nPhone: ${form.phone}\nWebsite required: ${form.type}\n\nMessage:\n${form.message}`)}`} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0B1E3B] px-6 py-3 text-sm font-semibold text-white hover:bg-[#122A52]"><Mail className="h-4 w-4" /> Send via email to hello@launchpadstudio.uk</a>
-                      <button onClick={() => setSubmitted(false)} className="mt-4 block w-full text-sm font-semibold text-slate-500 underline underline-offset-4 hover:text-[#0B1E3B]">Send another request</button>
+                      <h3 className="mt-5 text-2xl font-bold text-[#0B1E3B]">Thank you, {form.name.split(" ")[0]} — your enquiry is on its way.</h3>
+                      <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">Your request about a <strong>{form.type}</strong> has been sent to Launchpad Studio and securely saved. We'll get back to you within one working day.</p>
+                      <button type="button" onClick={() => { setSubmitted(false); setForm({ name: "", business: "", email: "", phone: "", type: "Business Website", message: "", website: "" }); setQuoteContext(""); setFormError(""); }} className="mt-6 text-sm font-semibold text-slate-500 underline underline-offset-4 hover:text-[#0B1E3B]">Send another enquiry</button>
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmit} noValidate>
+                    <form onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
+                      <div aria-hidden="true" className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden">
+                        <label htmlFor="website">Leave this field blank</label>
+                        <input id="website" name="website" value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} autoComplete="off" tabIndex={-1} />
+                      </div>
                       <h3 className="text-xl font-bold text-[#0B1E3B]">Request your free quote</h3>
                       <p className="mt-1 text-sm text-slate-500">Takes about 60 seconds. Fields marked * are required.</p>
 
@@ -669,30 +708,32 @@ export default function App() {
                       <div className="mt-6 grid gap-4 sm:grid-cols-2">
                         <div>
                           <label htmlFor="name" className="text-sm font-bold text-[#0B1E3B]">Your Name *</label>
-                          <input id="name" autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Emma Thompson" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
+                          <input id="name" autoComplete="name" maxLength={120} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Emma Thompson" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
                         </div>
                         <div>
                           <label htmlFor="business" className="text-sm font-bold text-[#0B1E3B]">Business Name</label>
-                          <input id="business" autoComplete="organization" value={form.business} onChange={e => setForm({ ...form, business: e.target.value })} placeholder="e.g. Emma's Café, Kingston" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" />
+                          <input id="business" autoComplete="organization" maxLength={160} value={form.business} onChange={e => setForm({ ...form, business: e.target.value })} placeholder="e.g. Emma's Café, Kingston" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" />
                         </div>
                         <div>
                           <label htmlFor="email" className="text-sm font-bold text-[#0B1E3B]">Email Address *</label>
-                          <input id="email" type="email" autoComplete="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@yourbusiness.co.uk" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
+                          <input id="email" type="email" autoComplete="email" maxLength={254} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="you@yourbusiness.co.uk" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
                         </div>
                         <div>
                           <label htmlFor="phone" className="text-sm font-bold text-[#0B1E3B]">Phone <span className="font-medium text-slate-400">(optional)</span></label>
-                          <input id="phone" type="tel" autoComplete="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="07xxx xxx xxx" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" />
+                          <input id="phone" type="tel" autoComplete="tel" maxLength={50} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="07xxx xxx xxx" className="mt-1.5 w-full rounded-xl border border-slate-300 px-4 py-3 text-[15px] placeholder:text-slate-400 focus:border-[#0B1E3B]" />
                         </div>
                       </div>
                       <div className="mt-4">
                         <label htmlFor="message" className="text-sm font-bold text-[#0B1E3B]">Tell us about your project *</label>
-                        <textarea id="message" rows={5} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="What does your business do? Do you have a website already? Is there a site you like the look of? Anything else we should know…" className="mt-1.5 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 text-[15px] leading-relaxed placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
+                        <textarea id="message" rows={5} maxLength={5000} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} placeholder="What does your business do? Do you have a website already? Is there a site you like the look of? Anything else we should know…" className="mt-1.5 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 text-[15px] leading-relaxed placeholder:text-slate-400 focus:border-[#0B1E3B]" required />
                       </div>
 
                       {formError && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200">{formError}</p>}
 
-                      <button type="submit" className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-7 py-4 text-[15px] font-bold text-white shadow-lg shadow-orange-500/25 hover:bg-[#E85A28]">Request My Free Quote <ArrowRight className="h-4 w-4" /></button>
-                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500"><Lock className="h-3.5 w-3.5" /> Your details are only used to reply to this enquiry. No spam, ever.</p>
+                      <button type="submit" disabled={isSubmitting} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-7 py-4 text-[15px] font-bold text-white shadow-lg shadow-orange-500/25 hover:bg-[#E85A28] disabled:cursor-wait disabled:opacity-70">
+                        {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Sending your enquiry…</> : <>Submit enquiry <ArrowRight className="h-4 w-4" /></>}
+                      </button>
+                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500"><Lock className="h-3.5 w-3.5" /> Your details are stored securely and used only to respond to your enquiry.</p>
                     </form>
                   )}
                 </div>
@@ -711,7 +752,7 @@ export default function App() {
                   <span className="leading-none"><span className="block text-[17px] font-extrabold tracking-tight">Launchpad <span className="text-[#FF8A5C]">Studio</span></span><span className="mt-0.5 block text-[10.5px] text-white/50">launchpadstudio.uk</span></span>
                 </a>
                 <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/65">Professional websites for local businesses. Designed, built and supported by a real person in New Malden, Surrey.</p>
-                <a href="mailto:hello@launchpadstudio.uk" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-[#FFB08A]"><Mail className="h-4 w-4 text-[#FF8A5C]" /> hello@launchpadstudio.uk</a>
+                <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white"><Mail className="h-4 w-4 text-[#FF8A5C]" /> hello@launchpadstudio.uk</p>
               </div>
               <nav aria-label="Services">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/40">Services</p>
