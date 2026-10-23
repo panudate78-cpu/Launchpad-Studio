@@ -9,6 +9,8 @@
     "preview": "node node_modules/vite/bin/vite.js preview",
     "typecheck": "tsc --noEmit",
     "build:check": "npm run typecheck && npm run build",
+    "build:og": "node scripts/build-og-image.mjs",
+    "verify:social": "node scripts/verify-social-meta.mjs",
     "postinstall": "node scripts/fix-perms.mjs"
   },
   "dependencies": {

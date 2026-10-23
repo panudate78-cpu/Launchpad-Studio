@@ -100,6 +100,50 @@ The static site can still be built with `netlify.toml`, but `api/contact.ts` is 
 
 ---
 
+## Social sharing card
+
+Sharing `https://launchpadstudio.uk` now shows a branded 1200×630 preview card
+instead of a blank box. The card carries the Launchpad Studio logo, the
+**“Launchpad Studio — Professional Websites for Local Businesses”** headline and
+a navy-and-orange background matching the site. It is wired up for Facebook,
+Messenger, WhatsApp, LinkedIn and X/Twitter through the Open Graph, Twitter and
+LinkedIn meta tags in `index.html`.
+
+| File | Purpose |
+| --- | --- |
+| `public/og-image.jpg` | The 1200×630 JPEG referenced by `og:image` / `twitter:image` / `ln:image`. Committed and deployed as-is. |
+| `public/og-image.png` | The same artwork as PNG, for platforms that prefer it. |
+| `assets/social-card.svg` | Editable vector source for the card. |
+
+The raster files are committed, so the deployed site never depends on a build
+step for the card. Regenerate them from the SVG only when redesigning:
+
+```bash
+npm install --no-save sharp
+# one time: make the brand fonts (Inter, Fraunces) available to fontconfig
+npm install --no-save @fontsource/inter @fontsource/fraunces
+mkdir -p ~/.local/share/fonts
+cp node_modules/@fontsource/inter/files/*.ttf ~/.local/share/fonts/
+cp node_modules/@fontsource/fraunces/files/*.ttf ~/.local/share/fonts/
+npm run build:og
+```
+
+Verify the metadata and image locally, or against a live deployment:
+
+```bash
+npm run verify:social
+# against a deployment:
+node scripts/verify-social-meta.mjs --url https://launchpadstudio.uk
+```
+
+`verify:social` confirms every required OG / Twitter / LinkedIn tag is present and
+consistent, that `og:image` is an absolute URL, and that the image is fetchable
+and a non-blank 1200×630. After deploying, run it against the live domain. If a
+platform still shows a stale card, use its cache-buster (Meta Sharing Debugger,
+X Card Validator) to force a refresh.
+
+---
+
 ## Notes on the build scripts
 
 `package.json` invokes Vite directly rather than through `node_modules/.bin`:
@@ -131,8 +175,15 @@ src/
   assets/admin/            Optional real admin screenshots (auto-detected by filename)
 api/
   contact.ts               Vercel enquiry endpoint (Zoho Mail SMTP delivery)
+assets/
+  social-card.svg          Social sharing card vector source
+public/
+  og-image.jpg             1200x630 social preview image (deployed)
+  og-image.png             PNG variant of the same card
 scripts/
   fix-perms.mjs            postinstall permission repair
+  build-og-image.mjs       Regenerate the social card from the SVG
+  verify-social-meta.mjs   Validate social meta tags + image
 vercel.json                Vercel build config
 netlify.toml               Netlify static-site config
 .env.example               Server-side contact form variables
