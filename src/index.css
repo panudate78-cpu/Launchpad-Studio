@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-system, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --color-navy-950: #071426;
+  --color-navy-900: #0B1E3B;
+  --color-navy-800: #122A52;
+  --color-navy-700: #1B3A6B;
+  --color-accent-500: #FF6B35;
+  --color-accent-600: #E85A28;
+  --color-cream: #FFFBF5;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-sans); color: #0f172a; background: #fff; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+::selection { background: #0B1E3B; color: #fff; }
+
+/* subtle grain / dot helpers */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(11,30,59,.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.line-grid {
+  background-image: linear-gradient(to right, rgba(11,30,59,.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(11,30,59,.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* focus visible for a11y */
+:focus-visible { outline: 3px solid rgba(255,107,53,.55); outline-offset: 3px; border-radius: 6px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; border: 2px solid #f1f5f9; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@keyframes floaty { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
+.animate-floaty { animation: floaty 6s ease-in-out infinite; }
+@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+.animate-marquee { animation: marquee 28s linear infinite; }
