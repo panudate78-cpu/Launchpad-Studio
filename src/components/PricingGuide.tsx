@@ -60,7 +60,7 @@ const PACKAGES: Package[] = [
     bestFor: "Salons, cafés, services and growing local firms",
     includes: [
       "Everything in Starter",
-      "Admin area to edit your own content",
+      "Client Admin Dashboard (CMS) included",
       "Service, pricing & gallery pages",
       "Local SEO for your area",
       "Two rounds of refinements",
@@ -76,10 +76,10 @@ const PACKAGES: Package[] = [
     bestFor: "Boutiques, makers and retail stores",
     includes: [
       "Everything in Business",
+      "Client Admin Dashboard & shop CMS",
       "Secure checkout & payment setup",
       "Product, category & order pages",
-      "Order email notifications",
-      "Training to add products yourself",
+      "Order notifications & handover training",
     ],
   },
 ];
@@ -87,21 +87,12 @@ const PACKAGES: Package[] = [
 const EXTRAS: Extra[] = [
   {
     id: "admin",
-    label: "Admin area",
-    desc: "Update menus, prices and text yourself — no developer needed.",
+    label: "Client Admin Dashboard",
+    desc: "Content management system (CMS) to update menus, prices, hours and text yourself — no developer needed.",
     low: 250,
     high: 450,
     icon: LayoutDashboard,
     includedIn: ["business", "ecommerce"],
-  },
-  {
-    id: "shop",
-    label: "Online shop",
-    desc: "Sell products with secure checkout and order notifications.",
-    low: 600,
-    high: 1200,
-    icon: ShoppingBag,
-    includedIn: ["ecommerce"],
   },
   {
     id: "booking",
@@ -130,6 +121,15 @@ const EXTRAS: Extra[] = [
     icon: Search,
     includedIn: [],
   },
+  {
+    id: "shop",
+    label: "Online shop",
+    desc: "Sell products with secure checkout and order notifications.",
+    low: 600,
+    high: 1200,
+    icon: ShoppingBag,
+    includedIn: ["ecommerce"],
+  },
 ];
 
 const gbp = (n: number) => `£${n.toLocaleString("en-GB")}`;
@@ -150,9 +150,14 @@ export default function PricingGuide({
     [packageId],
   );
 
+  const availableExtras = useMemo(
+    () => EXTRAS.filter(e => !e.includedIn.includes(packageId)),
+    [packageId],
+  );
+
   const paidExtras = useMemo(
-    () => EXTRAS.filter(e => selected.includes(e.id) && !e.includedIn.includes(packageId)),
-    [selected, packageId],
+    () => availableExtras.filter(e => selected.includes(e.id)),
+    [availableExtras, selected],
   );
 
   const totals = useMemo(() => {
@@ -287,39 +292,46 @@ export default function PricingGuide({
         <div className="mt-14">
           <div className="flex items-center gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0B1E3B] text-[12px] font-bold text-white">2</span>
-            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0B1E3B]">Add anything you need</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-[#0B1E3B]">Optional extras for {chosenPackage.name}</h3>
             <span className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" aria-hidden="true" />
           </div>
 
           <div className="mt-5 grid gap-6 lg:grid-cols-12 lg:items-start">
             {/* extras */}
             <div className="lg:col-span-7">
+              {includedExtras.length > 0 ? (
+                <p className="mb-3 flex items-start gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/60 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-emerald-950">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                  <span>
+                    <strong>{includedExtras.map(e => e.label).join(" & ")}</strong> {includedExtras.length > 1 ? "are" : "is"} included by default in <strong>{chosenPackage.name}</strong> — only optional add-ons are shown below.
+                  </span>
+                </p>
+              ) : (
+                <p className="mb-3 text-[12.5px] leading-relaxed text-slate-500">
+                  <strong className="font-semibold text-[#0B1E3B]">{chosenPackage.name}</strong> does not include a CMS by default — add the <strong className="font-semibold text-[#0B1E3B]">Client Admin Dashboard</strong> below if you&apos;d like to edit content yourself.
+                </p>
+              )}
+
               <div className="grid gap-3 sm:grid-cols-2">
-                {EXTRAS.map(extra => {
-                  const included = extra.includedIn.includes(packageId);
-                  const isOn = selected.includes(extra.id) && !included;
+                {availableExtras.map(extra => {
+                  const isOn = selected.includes(extra.id);
                   const Icon = extra.icon;
                   return (
                     <button
                       key={extra.id}
                       type="button"
-                      onClick={() => !included && toggleExtra(extra.id)}
+                      onClick={() => toggleExtra(extra.id)}
                       aria-pressed={isOn}
-                      disabled={included}
                       className={`group relative flex h-full items-start gap-3.5 rounded-2xl border p-4 text-left transition duration-200 ${
-                        included
-                          ? "cursor-default border-emerald-200 bg-emerald-50/60"
-                          : isOn
-                            ? "border-[#FF6B35] bg-[#FFF7F2] shadow-[0_14px_30px_-22px_rgba(232,90,40,0.8)]"
-                            : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-24px_rgba(11,30,59,0.5)]"
+                        isOn
+                          ? "border-[#FF6B35] bg-[#FFF7F2] shadow-[0_14px_30px_-22px_rgba(232,90,40,0.8)]"
+                          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-24px_rgba(11,30,59,0.5)]"
                       }`}
                     >
                       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
-                        included
-                          ? "bg-emerald-600 text-white"
-                          : isOn
-                            ? "bg-[#FF6B35] text-white"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-[#0B1E3B] group-hover:text-white"
+                        isOn
+                          ? "bg-[#FF6B35] text-white"
+                          : "bg-slate-100 text-slate-500 group-hover:bg-[#0B1E3B] group-hover:text-white"
                       }`}>
                         <Icon className="h-[18px] w-[18px]" />
                       </span>
@@ -328,19 +340,13 @@ export default function PricingGuide({
                         <span className="flex items-center justify-between gap-2">
                           <span className="text-[14px] font-bold text-[#0B1E3B]">{extra.label}</span>
                           {/* switch */}
-                          {included ? (
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                              <Check className="h-3 w-3" strokeWidth={3} /> Included
-                            </span>
-                          ) : (
-                            <span aria-hidden="true" className={`relative ml-1 flex h-[20px] w-[34px] shrink-0 items-center rounded-full p-[2px] transition ${isOn ? "bg-[#FF6B35]" : "bg-slate-200"}`}>
-                              <span className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isOn ? "translate-x-[14px]" : "translate-x-0"}`} />
-                            </span>
-                          )}
+                          <span aria-hidden="true" className={`relative ml-1 flex h-[20px] w-[34px] shrink-0 items-center rounded-full p-[2px] transition ${isOn ? "bg-[#FF6B35]" : "bg-slate-200"}`}>
+                            <span className={`h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isOn ? "translate-x-[14px]" : "translate-x-0"}`} />
+                          </span>
                         </span>
                         <span className="mt-1 block text-[12.5px] leading-relaxed text-slate-500">{extra.desc}</span>
-                        <span className={`mt-1.5 block text-[11.5px] font-semibold ${included ? "text-emerald-700" : isOn ? "text-[#C7511F]" : "text-slate-400"}`}>
-                          {included ? "Already part of this package" : `+ ${range(extra.low, extra.high)}`}
+                        <span className={`mt-1.5 block text-[11.5px] font-semibold ${isOn ? "text-[#C7511F]" : "text-slate-400"}`}>
+                          + {range(extra.low, extra.high)}
                         </span>
                       </span>
                     </button>
@@ -382,6 +388,12 @@ export default function PricingGuide({
                       <span className="text-white/70">Package build</span>
                       <span className="font-semibold tabular-nums text-white">{range(chosenPackage.low, chosenPackage.high)}</span>
                     </div>
+                    {includedExtras.length > 0 && (
+                      <div className="flex items-baseline justify-between gap-4">
+                        <span className="text-white/70">Included by default</span>
+                        <span className="text-right font-semibold text-emerald-300">{includedExtras.map(e => e.label).join(" · ")}</span>
+                      </div>
+                    )}
                     {paidExtras.map(extra => (
                       <div key={extra.id} className="flex items-baseline justify-between gap-4">
                         <span className="flex items-center gap-1.5 text-white/70">
@@ -391,13 +403,7 @@ export default function PricingGuide({
                       </div>
                     ))}
                     {paidExtras.length === 0 && (
-                      <p className="text-[12px] leading-relaxed text-white/40">No extras yet — add anything above and this estimate updates.</p>
-                    )}
-                    {includedExtras.length > 0 && (
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="text-white/70">Included at no extra cost</span>
-                        <span className="font-semibold text-emerald-300">{includedExtras.map(e => e.label).join(" · ")}</span>
-                      </div>
+                      <p className="text-[12px] leading-relaxed text-white/40">No optional extras selected — toggle any add-on to update your estimate.</p>
                     )}
                   </div>
 
