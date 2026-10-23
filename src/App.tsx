@@ -679,7 +679,7 @@ export default function App() {
                     <div className="py-10 text-center" role="status" aria-live="polite">
                       <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200"><Check className="h-8 w-8 text-emerald-600" /></span>
                       <h3 className="mt-5 text-2xl font-bold text-[#0B1E3B]">Thank you, {form.name.split(" ")[0]} — your enquiry is on its way.</h3>
-                      <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">Your request about a <strong>{form.type}</strong> has been sent to Launchpad Studio and securely saved. We'll get back to you within one working day.</p>
+                      <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">Your request about a <strong>{form.type}</strong> has been emailed to Launchpad Studio. We'll get back to you within one working day.</p>
                       <button type="button" onClick={() => { setSubmitted(false); setForm({ name: "", business: "", email: "", phone: "", type: "Business Website", message: "", website: "" }); setQuoteContext(""); setFormError(""); }} className="mt-6 text-sm font-semibold text-slate-500 underline underline-offset-4 hover:text-[#0B1E3B]">Send another enquiry</button>
                     </div>
                   ) : (
@@ -733,7 +733,7 @@ export default function App() {
                       <button type="submit" disabled={isSubmitting} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-7 py-4 text-[15px] font-bold text-white shadow-lg shadow-orange-500/25 hover:bg-[#E85A28] disabled:cursor-wait disabled:opacity-70">
                         {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Sending your enquiry…</> : <>Submit enquiry <ArrowRight className="h-4 w-4" /></>}
                       </button>
-                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500"><Lock className="h-3.5 w-3.5" /> Your details are stored securely and used only to respond to your enquiry.</p>
+                      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500"><Lock className="h-3.5 w-3.5" /> Your details are sent securely to our inbox and used only to respond to your enquiry.</p>
                     </form>
                   )}
                 </div>
