@@ -1,5 +1,5 @@
 import {
-  ShoppingBag, CalendarDays, Mail, Clock, PoundSterling, Search, Volume2, RefreshCw, Inbox,
+  ShoppingBag, CalendarDays, Mail, Clock, PoundSterling, Search, Volume2, RefreshCw,
   ChevronDown, ArrowUp, ArrowDown, Eye, SlidersHorizontal, Pencil, Plus, Star, ArrowRight,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -88,16 +88,30 @@ function SignIn() {
 
 function Dashboard() {
   const stats = [
-    { l: "New orders", v: "0", s: "All caught up", i: ShoppingBag },
-    { l: "Pending bookings", v: "0", s: "Nothing waiting", i: CalendarDays },
-    { l: "Unread messages", v: "0", s: "All read", i: Mail },
-    { l: "Collections today", v: "0", s: "Pickups scheduled today", i: Clock },
-    { l: "Today's value", v: "£0.00", s: "Excludes cancelled", i: PoundSterling },
+    { l: "New orders", v: "12", s: "Received today", i: ShoppingBag },
+    { l: "Pending bookings", v: "4", s: "Awaiting confirmation", i: CalendarDays },
+    { l: "Unread messages", v: "0", s: "All read · 3 today", i: Mail },
+    { l: "Collections today", v: "5", s: "Pickups scheduled today", i: Clock },
+    { l: "Today's value", v: "£486", s: "Excludes cancelled", i: PoundSterling },
+  ];
+  const orders = [
+    { id: "#TC-209", name: "Sarah M.", slot: "18:45", items: "Pad Thai Goong, Thai Green Curry, Jasmine Rice ×2", total: "£38.50", status: "Ready", badge: "bg-[#D5F5E3] text-[#0E6B3E]", action: "Mark collected", primary: false },
+    { id: "#TC-210", name: "James T.", slot: "19:00", items: "Massaman Beef, Crispy Spring Rolls, Coconut Rice ×2", total: "£42.00", status: "Preparing", badge: "bg-[#EFECE6] text-[#4a453f]", action: "Mark ready", primary: false },
+    { id: "#TC-211", name: "Priya K.", slot: "19:15", items: "Drunken Noodles, Chicken Satay, Tom Kha Soup, Prawn Crackers", total: "£46.50", status: "New", badge: "bg-[#FBEFC8] text-[#7A5410]", action: "Accept order", primary: true },
+  ];
+  const bookings = [
+    { time: "19:00", day: "Tonight", name: "Hannah C.", party: "4 guests", note: "Window table if available", status: "Confirmed", pending: false },
+    { time: "19:30", day: "Tonight", name: "Oliver B.", party: "2 guests", note: "Anniversary dinner", status: "Pending", pending: true },
+    { time: "20:00", day: "Tonight", name: "Rachel S.", party: "5 guests", note: "Nut allergy noted", status: "Pending", pending: true },
   ];
   return (
     <div className="p-5 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><Eyebrow>Operations today</Eyebrow><Title>Dashboard</Title><p className="text-[13px] text-[#7b756c]">Friday 23 October 2026</p></div>
+        <div>
+          <div className="flex items-center gap-2"><Eyebrow>Operations today</Eyebrow><Sample /></div>
+          <Title>Dashboard</Title>
+          <p className="text-[13px] text-[#7b756c]">Friday 23 October 2026</p>
+        </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D5F5E3] px-3.5 py-1.5 text-[12.5px] font-medium text-[#0E6B3E]"><span className="h-1.5 w-1.5 rounded-full bg-[#0E6B3E]" />Online ordering is live</span>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -108,22 +122,63 @@ function Dashboard() {
           </div>
         ))}
       </div>
-      <p className="mt-6 text-[18px] font-medium text-[#1B1917]">Live orders</p>
+      <div className="mt-6 flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-[18px] font-medium text-[#1B1917]">Live orders</p>
+        <p className="text-[12px] text-[#7b756c]">3 active in kitchen · 2 scheduled for later slots</p>
+      </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap rounded-xl border border-[#E7E1D8] bg-white p-1 text-[12.5px]">
           {["Active", "New", "Preparing", "Ready", "Collected", "Cancelled", "All"].map((t, i) => <span key={t} className={`rounded-lg px-2.5 py-1 ${i === 0 ? "bg-[#1B1917] text-white" : "text-[#3a3631]"}`}>{t}</span>)}
         </div>
         <span className="hidden flex-1 items-center gap-2 rounded-xl border border-[#E7E1D8] bg-white px-3 py-2 text-[12px] text-[#9a948a] lg:flex"><Search className="h-3.5 w-3.5" />Search name, phone or order no.</span>
         <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#1B1917] px-3 py-2 text-[11.5px] font-semibold uppercase text-white"><Volume2 className="h-3.5 w-3.5" />Order alerts active</span>
-        <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#E7E1D8] bg-white px-3 py-2 text-[12px] text-[#1B1917]"><RefreshCw className="h-3.5 w-3.5" />Updated 11:40</span>
+        <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#E7E1D8] bg-white px-3 py-2 text-[12px] text-[#1B1917]"><RefreshCw className="h-3.5 w-3.5" />Updated 18:42</span>
       </div>
-      <div className="mt-3 flex flex-col items-center rounded-2xl border border-[#E7E1D8] bg-white py-9 text-center">
-        <Inbox className="h-8 w-8 text-[#7b756c]" strokeWidth={1.5} />
-        <p className="mt-2 text-[14px] text-[#5b564f]">No orders here yet.</p><p className="text-[12.5px] text-[#7b756c]">New collection orders will appear automatically.</p>
+      <div className="mt-3 overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white">
+        {orders.map((o, i) => (
+          <div key={o.id} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${i < orders.length - 1 ? "border-b border-[#EEE9E1]" : ""}`}>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-[14px] text-[#1B1917]">
+                <span className="font-semibold">{o.id}</span>
+                <span className="font-medium">{o.name}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${o.badge}`}>{o.status}</span>
+                <span className="inline-flex items-center gap-1 text-[11.5px] text-[#6b655c]"><Clock className="h-3 w-3 text-[#7A5A2A]" />Collect {o.slot}</span>
+              </div>
+              <p className="mt-0.5 truncate text-[12px] text-[#6b655c]">{o.items}</p>
+            </div>
+            <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+              <span className="text-[14px] font-semibold text-[#1B1917]">{o.total}</span>
+              <span className={`rounded-lg px-2.5 py-1.5 text-[12px] font-semibold ${o.primary ? "bg-[#1B1917] text-white" : "border border-[#E7E1D8] bg-white text-[#1B1917]"}`}>{o.action}</span>
+            </div>
+          </div>
+        ))}
       </div>
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#E7E1D8] bg-white p-5">
-        <div><p className="text-[17px] font-medium text-[#1B1917]">Upcoming bookings</p><p className="mt-1 text-[12.5px] text-[#7b756c]">No upcoming bookings.</p></div>
-        <span className="flex items-center gap-1 text-[12.5px] font-medium text-[#6B4E1F]">Manage bookings <ArrowRight className="h-3.5 w-3.5" /></span>
+      <div className="mt-4 overflow-hidden rounded-2xl border border-[#E7E1D8] bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EEE9E1] bg-[#FBFAF8] px-4 py-3">
+          <div>
+            <p className="text-[17px] font-medium text-[#1B1917]">Upcoming bookings</p>
+            <p className="text-[12px] text-[#7b756c]">Tonight's tables · 4 requests awaiting confirmation</p>
+          </div>
+          <span className="flex items-center gap-1 text-[12.5px] font-medium text-[#6B4E1F]">Manage bookings <ArrowRight className="h-3.5 w-3.5" /></span>
+        </div>
+        {bookings.map((b, i) => (
+          <div key={`${b.time}-${b.name}`} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${i < bookings.length - 1 ? "border-b border-[#EEE9E1]" : ""}`}>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-[13.5px] text-[#1B1917]">
+                <span className="font-semibold">{b.time}</span>
+                <span className="text-[11.5px] text-[#7b756c]">{b.day}</span>
+                <span className="text-[#cfc9c0]">·</span>
+                <span className="font-medium">{b.name}</span>
+                <span className="rounded bg-[#F1EEE9] px-1.5 py-0.5 text-[11px] font-medium text-[#4a453f]">{b.party}</span>
+              </div>
+              <p className="mt-0.5 truncate text-[12px] text-[#6b655c]">{b.note}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold ${b.pending ? "bg-[#FBEFC8] text-[#7A5410]" : "bg-[#D5F5E3] text-[#0E6B3E]"}`}>{b.status}</span>
+              {b.pending && <span className="rounded-lg bg-[#1B1917] px-2.5 py-1 text-[12px] font-semibold text-white">Confirm</span>}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
