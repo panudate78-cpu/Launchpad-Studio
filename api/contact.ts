@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { neon } from "@neondatabase/serverless";
+import nodemailer from "nodemailer";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 type FunctionRequest = IncomingMessage & { body?: unknown };
@@ -119,11 +119,11 @@ function isSameOriginRequest(request: FunctionRequest): boolean {
   }
 }
 
-function makeEmailText(enquiry: Enquiry, enquiryId: string): string {
+function makeEmailText(enquiry: Enquiry, reference: string): string {
   return [
     "A new website enquiry has been submitted through launchpadstudio.uk.",
     "",
-    `Enquiry reference: ${enquiryId}`,
+    `Reference: ${reference}`,
     `Name: ${enquiry.name}`,
     `Business: ${enquiry.business || "Not provided"}`,
     `Email: ${enquiry.email}`,
@@ -141,6 +141,7 @@ export const config = {
       sizeLimit: "32kb",
     },
   },
+  maxDuration: 30,
 };
 
 export default async function contact(request: FunctionRequest, response: FunctionResponse) {
@@ -180,19 +181,20 @@ export default async function contact(request: FunctionRequest, response: Functi
     return jsonError(response, 400, "Please check your name, email address and project details.");
   }
 
-  // Neon integrations on Vercel may expose either DATABASE_URL or POSTGRES_URL.
-  const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const senderEmail =
-    process.env.RESEND_FROM_EMAIL?.trim() || "Launchpad Studio <hello@launchpadstudio.uk>";
+  const smtpHost = process.env.ZOHO_SMTP_HOST?.trim();
+  const smtpUser = process.env.ZOHO_SMTP_USER?.trim();
+  const smtpPassword = process.env.ZOHO_SMTP_PASSWORD;
+  const smtpPort = Number(process.env.ZOHO_SMTP_PORT || 465);
 
-  if (!databaseUrl || !resendApiKey) {
+  if (!smtpHost || !smtpUser || !smtpPassword || ![465, 587].includes(smtpPort)) {
     const missingSettings = [
-      ...(!databaseUrl ? ["DATABASE_URL or POSTGRES_URL"] : []),
-      ...(!resendApiKey ? ["RESEND_API_KEY"] : []),
+      ...(!smtpHost ? ["ZOHO_SMTP_HOST"] : []),
+      ...(!smtpUser ? ["ZOHO_SMTP_USER"] : []),
+      ...(!smtpPassword ? ["ZOHO_SMTP_PASSWORD"] : []),
+      ...(![465, 587].includes(smtpPort) ? ["ZOHO_SMTP_PORT must be 465 or 587"] : []),
     ];
-    // Log variable names only; never log secret values or enquiry content.
-    console.error("[contact] Missing required environment variables", missingSettings);
+    // Log setting names only; never log credentials or enquiry contents.
+    console.error("[contact] Missing or invalid Zoho SMTP settings", missingSettings);
     return jsonError(
       response,
       503,
@@ -200,107 +202,49 @@ export default async function contact(request: FunctionRequest, response: Functi
     );
   }
 
-  const sql = neon(databaseUrl);
-  const enquiryId = randomUUID();
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    requireTLS: smtpPort === 587,
+    auth: {
+      user: smtpUser,
+      pass: smtpPassword,
+    },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 15000,
+  });
+
+  const reference = randomUUID();
 
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS contact_enquiries (
-        id UUID PRIMARY KEY,
-        name TEXT NOT NULL,
-        business TEXT NOT NULL DEFAULT '',
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL DEFAULT '',
-        website_type TEXT NOT NULL,
-        message TEXT NOT NULL,
-        notification_status TEXT NOT NULL DEFAULT 'pending'
-          CHECK (notification_status IN ('pending', 'sent', 'failed')),
-        notification_id TEXT,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
-
-    await sql`
-      INSERT INTO contact_enquiries
-        (id, name, business, email, phone, website_type, message)
-      VALUES
-        (${enquiryId}, ${enquiry.name}, ${enquiry.business}, ${enquiry.email},
-         ${enquiry.phone}, ${enquiry.type}, ${enquiry.message})
-    `;
-  } catch (error) {
-    console.error("[contact] Could not store enquiry", error instanceof Error ? error.name : "UnknownError");
-    return jsonError(
-      response,
-      503,
-      "We couldn't save your enquiry just now. Please try again in a moment.",
-    );
-  }
-
-  let resendStatus: number | undefined;
-  try {
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
+    // Await the SMTP send before responding; Vercel can pause unfinished work
+    // after the function returns.
+    const result = await transporter.sendMail({
+      from: {
+        name: "Launchpad Studio",
+        address: smtpUser,
       },
-      body: JSON.stringify({
-        from: senderEmail,
-        to: [RECIPIENT_EMAIL],
-        reply_to: enquiry.email,
-        subject: `Website enquiry — ${enquiry.business || enquiry.name}`.replace(/[\r\n]+/g, " "),
-        text: makeEmailText(enquiry, enquiryId),
-      }),
-      signal: AbortSignal.timeout(8000),
+      to: RECIPIENT_EMAIL,
+      replyTo: enquiry.email,
+      subject: `Website enquiry — ${enquiry.business || enquiry.name}`.replace(/[\r\n]+/g, " "),
+      text: makeEmailText(enquiry, reference),
     });
-    resendStatus = emailResponse.status;
 
-    if (!emailResponse.ok) {
-      throw new Error("EmailProviderError");
-    }
-
-    const providerResult: unknown = await emailResponse.json().catch(() => null);
-    const notificationId =
-      typeof providerResult === "object" &&
-      providerResult !== null &&
-      "id" in providerResult &&
-      typeof providerResult.id === "string"
-        ? providerResult.id
-        : null;
-
-    try {
-      await sql`
-        UPDATE contact_enquiries
-        SET notification_status = 'sent', notification_id = ${notificationId}
-        WHERE id = ${enquiryId}
-      `;
-    } catch (error) {
-      // The email has been accepted and the enquiry is already stored. Keep the
-      // visitor's submission successful even if this status update cannot be saved.
-      console.error("[contact] Could not update delivery status", error instanceof Error ? error.name : "UnknownError");
+    if (result.accepted.length === 0) {
+      throw new Error("NoRecipientAccepted");
     }
 
     return response.status(201).json({ ok: true });
   } catch (error) {
-    console.error("[contact] Email notification failed", {
-      status: resendStatus ?? "network-error",
-      errorType: error instanceof Error ? error.name : "UnknownError",
-    });
-
-    try {
-      await sql`
-        UPDATE contact_enquiries
-        SET notification_status = 'failed'
-        WHERE id = ${enquiryId}
-      `;
-    } catch (updateError) {
-      console.error("[contact] Could not record notification failure", updateError instanceof Error ? updateError.name : "UnknownError");
-    }
-
+    console.error("[contact] Zoho SMTP send failed", error instanceof Error ? error.name : "UnknownError");
     return jsonError(
       response,
       502,
-      "Your enquiry has been saved securely, but we couldn't notify our team just now. Please try again shortly.",
+      "We couldn't send your enquiry just now. Please try again in a moment.",
     );
+  } finally {
+    transporter.close();
   }
 }

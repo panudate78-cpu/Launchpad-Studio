@@ -72,25 +72,25 @@ The static site configuration is in `vercel.json`. The enquiry form is handled b
 
 #### Contact form setup (one time)
 
-The form posts to `/api/contact`. The function validates the submission, saves it to a Neon PostgreSQL database, and sends an email notification to `hello@launchpadstudio.uk` using Resend. Database and email credentials are used only on the server; do not prefix them with `VITE_` or expose them in frontend code.
+The form posts to `/api/contact`. The Vercel Serverless Function validates each submission and sends it through your existing Zoho Mail account to `hello@launchpadstudio.uk`. There is **no Neon database and no Resend account**: the received email in your Zoho inbox is the enquiry record. SMTP credentials are used only on the server; do not prefix them with `VITE_` or expose them in frontend code.
 
-1. Create a Neon database (or provision Neon through the Vercel Marketplace) and add its PostgreSQL connection string as `DATABASE_URL` (Neon integrations that expose `POSTGRES_URL` are supported too).
-2. Verify the `launchpadstudio.uk` sending domain in Resend and create an API key. Unless overridden, the sender is `Launchpad Studio <hello@launchpadstudio.uk>`; if you use a different verified sender, set `RESEND_FROM_EMAIL` to it.
-3. Add the environment variables in **Vercel → Project → Settings → Environment Variables** for the environment you are testing (Production, Preview, or Development), then redeploy:
+1. In Zoho Mail, open **Settings → Mail Accounts → Server Configurations** and copy the SMTP host shown for your account. Zoho's host depends on account type and data centre. Use the full mailbox address as the SMTP username; for two-factor authentication, generate an app-specific password rather than using your normal sign-in password.
+2. In **Vercel → Project → Settings → Environment Variables**, add these for the deployment environment you use (Production and Preview as appropriate), then redeploy:
 
    | Variable | Value |
    | --- | --- |
-   | `DATABASE_URL` (or `POSTGRES_URL`) | Neon PostgreSQL connection string |
-   | `RESEND_API_KEY` | Resend API key |
-   | `RESEND_FROM_EMAIL` | Optional verified sender; defaults to `Launchpad Studio <hello@launchpadstudio.uk>` |
+   | `ZOHO_SMTP_HOST` | The SMTP host shown in Zoho Mail settings (for example, a regional `smtppro` host for a paid custom-domain mailbox) |
+   | `ZOHO_SMTP_PORT` | `465` (SSL; default) or `587` (STARTTLS) |
+   | `ZOHO_SMTP_USER` | Full Zoho address authorised to send, ideally `hello@launchpadstudio.uk` |
+   | `ZOHO_SMTP_PASSWORD` | Zoho app-specific password / SMTP password |
 
-The function creates the `contact_enquiries` table on its first valid submission. Each enquiry is stored with its delivery status and timestamp; notification emails include the customer's name, business, reply-to email, phone, selected website type and message. The visitor sees success only after the notification is accepted by Resend. If delivery fails after storage, the form reports that the enquiry was saved and asks the visitor to retry. Enquiry data is personal information, so restrict access to the Neon and Resend accounts and remove records when they are no longer needed under your privacy/retention policy.
+Vercel blocks outbound SMTP on port 25 but permits the authenticated submission ports 465 and 587. This function waits for Zoho to accept the email before showing success. SMTP is the simplest option using your existing mailbox; Vercel notes that an HTTP email API can be more reliable for larger or higher-volume sending. [Vercel SMTP guidance](https://vercel.com/kb/guide/serverless-functions-and-smtp) · [Zoho SMTP settings](https://www.zoho.com/mail/help/zoho-smtp.html)
 
-For local end-to-end testing, copy `.env.example` to `.env.local`, add real test credentials, then run `npx vercel dev` (after linking the project with the Vercel CLI). `npm run dev` starts Vite only and does not run Vercel API functions.
+For local end-to-end testing, copy `.env.example` to `.env.local`, add the Zoho settings, then run `npx vercel dev` (after linking the project with the Vercel CLI). `npm run dev` starts Vite only and does not run Vercel API functions.
 
 ### Netlify
 
-The static site can still be built with `netlify.toml`, but `api/contact.ts` is a Vercel Serverless Function. A Netlify deployment needs an equivalent Netlify Function or a hosted form provider for the enquiry form; use Vercel if you want the included serverless form endpoint.
+The static site can still be built with `netlify.toml`, but `api/contact.ts` is a Vercel Serverless Function. A Netlify deployment would need an equivalent Netlify Function configured with the same Zoho SMTP settings; switching to Netlify does not remove the email credentials requirement.
 
 | Setting | Value |
 | --- | --- |
@@ -130,7 +130,7 @@ src/
     liveScreenshot.ts      Live client-site screenshot URLs + fallback
   assets/admin/            Optional real admin screenshots (auto-detected by filename)
 api/
-  contact.ts               Vercel enquiry endpoint (Neon storage + Resend email)
+  contact.ts               Vercel enquiry endpoint (Zoho Mail SMTP delivery)
 scripts/
   fix-perms.mjs            postinstall permission repair
 vercel.json                Vercel build config
